@@ -394,3 +394,83 @@ Possible answers:
 - 162 3
 - 216 4
 - 270 5
+
+### Phase 5
+
+~~~
+0000000000401142 <phase_5>:
+  401142:	53                   	push   %rbx						# Save %rbx to stack.
+  401143:	48 89 fb             	mov    %rdi,%rbx				# Save %rdi to %rbx. In this case it is the address of input string.
+  401146:	e8 6e 02 00 00       	callq  4013b9 <string_length>	# Measure string length.
+  40114b:	83 f8 06             	cmp    $0x6,%eax				# Compare returned value with 6.
+  40114e:	74 05                	je     401155 <phase_5+0x13>	# If strlen == 6, keep going.
+  401150:	e8 56 05 00 00       	callq  4016ab <explode_bomb>	# Or explode.
+  401155:	48 89 d8             	mov    %rbx,%rax				# Save address of input string to %rax.
+  401158:	48 8d 7b 06          	lea    0x6(%rbx),%rdi			# Save address of input string + 1 to %rdi.
+  40115c:	b9 00 00 00 00       	mov    $0x0,%ecx				# Save 0 to %ecx.
+
+  Until the end of the string, add *(0x402720 + (4 * (str[i] & 0xf)))
+  Total of them must be 0x21(33).
+
+  >>> Loop1 begin
+  401161:	0f b6 10             	movzbl (%rax),%edx				# Save currently pointing character of input string to %rdx.
+  401164:	83 e2 0f             	and    $0xf,%edx				# Leave only nibble..
+  401167:	03 0c 95 20 27 40 00 	add    0x402720(,%rdx,4),%ecx	# Add 0x402720(,%rdx,4) to %rcx.
+  40116e:	48 83 c0 01          	add    $0x1,%rax				# Add 1 to %rax.
+  401172:	48 39 f8             	cmp    %rdi,%rax				# Compare %rax with %rdi.
+  401175:	75 ea                	jne    401161 <phase_5+0x1f>	# If %rax != %rdi, go to loop begin.
+  <<< Loop1 end
+
+  401177:	83 f9 21             	cmp    $0x21,%ecx				# Compare %rcx with 0x21(33).
+  40117a:	74 05                	je     401181 <phase_5+0x3f>	# If %ecx == 0x21(33), finish function.
+  40117c:	e8 2a 05 00 00       	callq  4016ab <explode_bomb>
+  401181:	5b                   	pop    %rbx
+  401182:	c3                   	retq   
+~~~
+
+The table at 0x402720 is like below:
+
+~~~
+  402720:	02 00 00 00 0a 00 00 00 06 00 00 00 01 00 00 00     ................
+  402730:	0c 00 00 00 10 00 00 00 09 00 00 00 03 00 00 00     ................
+  402740:	04 00 00 00 07 00 00 00 0e 00 00 00 05 00 00 00     ................
+  402750:	0b 00 00 00 08 00 00 00 0f 00 00 00 0d 00 00 00     ................
+
+  When n is str[i] & 0xf, table of n is like below:
+
+  n		word
+
+  0x0:	0x02
+  0x1:	0x0a
+  0x2:	0x06
+  0x3:	0x01
+
+  0x4:	0x0c
+  0x5:	0x10
+  0x6:	0x09
+  0x7:	0x03
+
+  0x8:	0x04
+  0x9:	0x07
+  0xa:	0x0e
+  0xb:	0x05
+
+  0xc:	0x0b
+  0xd:	0x08
+  0xe:	0x0f
+  0xf:	0x0d
+~~~
+
+10 + 2 + 6 + 4 + 7 + 4
+
+0 / 1 / 2 / 8 / 8 / 9
+
+Summary:
+
+- Length of input string must be 6.
+- input_string.map(char -> n_to_word_table(char & 0f)).sum() must be 0x21(33).
+
+Possible answers:
+
+- Too many.
+- One of them is pabxxi.
