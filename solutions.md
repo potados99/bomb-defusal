@@ -92,28 +92,29 @@ We only need to figure out what this function does. So remove them also.
   400f72:	48 8d 6c 24 04       	lea    0x4(%rsp),%rbp			# Save %rsp + 4 to %rbp.
   400f77:	bb 01 00 00 00       	mov    $0x1,%ebx				# Save 1 to %ebx.
   400f7c:	eb 22                	jmp    400fa0 <phase_2+0x57>	# Go to 0x400fa0.
-  
-  >>> Loop begin
+
+  Set %edx to 1, %eax to 0 and start loop below if %ebx > 0.
+  In this case, %ebx is just set to 1 above. So get into the loop.
+
+  >>> Loop1 begin
   400f7e:	01 d2                	add    %edx,%edx				# Save 2 * %edx to %edx. %edx += %edx.
   400f80:	83 c0 01             	add    $0x1,%eax				# Add 1 to %eax.
-  400f83:	39 d8                	cmp    %ebx,%eax				# Compare %ebx(value of 1) and %eax(value of >= 8).
+  400f83:	39 d8                	cmp    %ebx,%eax				# Compare %ebx and %eax.
   400f85:	75 f7                	jne    400f7e <phase_2+0x35>	# If %ebx != %eax, go to 0x400f7e.
-  <<< Loop end
+  <<< Loop1 end
 
-  The loop above finishes when %ebx reaches %eax.
-  After the loop, %ebx will have a same value as %eax,
-  and %edx will have value of %rsp << (%rax - %rbx).
-  (The %edx is set, inside the <explode_bomb>, to the same value of %rsi, 
-   which is also same as %rsp.)
+  After the loop, %edx would be 1 << (%ebx - %eax).
+  %ebx: 1
+  %eax: 1
+  %edx: 2
 
-  >>> Loop begin
   400f87:	03 55 fc             	add    -0x4(%rbp),%edx			# Add vars[0] to %edx.
-  																	# The %rbp has value of %rsp + 4, so the %rbp - 4 means %rsp.
+  																	  The %rbp has value of %rsp + 4, so the %rbp - 4 means %rsp.
   400f8a:	39 55 00             	cmp    %edx,0x0(%rbp)			# Compare %edx and (%rbp).
   400f8d:	74 05                	je     400f94 <phase_2+0x4b>	# if %edx == (%rbp), keep going.
   400f8f:	e8 17 07 00 00       	callq  4016ab <explode_bomb>	# >> Or die.
-  400f94:	83 c3 01             	add    $0x1,%ebx				# Add 1 to %ebx.
-  400f97:	48 83 c5 04          	add    $0x4,%rbp				# Add 4 to %rbp.
+  400f94:	83 c3 01             	add    $0x1,%ebx				# Add 1 to %ebx. Now 2.
+  400f97:	48 83 c5 04          	add    $0x4,%rbp				# Add 4 to %rbp. Now points &vars[1]. 
   400f9b:	83 fb 07             	cmp    $0x7,%ebx				# Compare 7 and %ebx.
   400f9e:	74 10                	je     400fb0 <phase_2+0x67>	# >> If 7 == %ebx, go to the end of the function.
   400fa0:	ba 01 00 00 00       	mov    $0x1,%edx				# Save 1 to %edx.
@@ -121,12 +122,11 @@ We only need to figure out what this function does. So remove them also.
   400faa:	85 db                	test   %ebx,%ebx				# Test %ebx.
   400fac:	7f d0                	jg     400f7e <phase_2+0x35>	# If %ebx > 0, go to 0x400f7e and start loop.
   400fae:	eb d7                	jmp    400f87 <phase_2+0x3e>	# Go to 0x400f87.
-  << Loop end
-
   400fb0:	48 8b 44 24 28       	mov    0x28(%rsp),%rax			# Ready to finish.
   400fc5:	48 83 c4 38          	add    $0x38,%rsp				# Deallocate stack and return.
 ~~~
 
+Phase 2 calls <read_numbers>, which read seven numbers from user input.
 
 ~~~
 00000000004016e1 <read_numbers>:
@@ -157,3 +157,29 @@ We only need to figure out what this function does. So remove them also.
   401720:	48 83 c4 08          	add    $0x8,%rsp
   401724:	c3                   	retq   
 ~~~
+
+%ebx and one of seven integer is compared sequencially.
+
+The %ebx gets from 2 up to 128(2^7).
+
+Total 7 compare, each input number should be 2^(index of number + 1).
+
+Summary: 
+
+- vars[0] must be over zero.
+- vars[0] must be 2.
+- vars[1] must be vars[0] + 2.
+- vars[2] must be vars[1] + vars[1].
+- vars[3] must be vars[2] + vars[2].
+
+.
+.
+.
+
+answer is 2 4 8 16 32 64 128.    
+
+### Phase 3
+
+ In progress.
+
+
