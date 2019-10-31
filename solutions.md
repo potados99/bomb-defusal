@@ -180,6 +180,99 @@ answer is 2 4 8 16 32 64 128.
 
 ### Phase 3
 
- In progress.
+ The assembly:
 
+~~~
+0000000000400fcc <phase_3>:
+  400fcc:	48 83 ec 18          	sub    $0x18,%rsp						# Allocate 0x18(24) bytes in stack.
+  400fd0:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax					# Save stack canary to %rax.
+  400fd7:	00 00 
+  400fd9:	48 89 44 24 08       	mov    %rax,0x8(%rsp)					# Save stack canary to stack with offset +8.
+  400fde:	31 c0                	xor    %eax,%eax						# Clear %rax.
+  400fe0:	48 8d 4c 24 04       	lea    0x4(%rsp),%rcx					# Save %rsp + 4 to %rcx.
+  400fe5:	48 89 e2             	mov    %rsp,%rdx						# Save %rsp to %rdx.
+  400fe8:	be b0 29 40 00       	mov    $0x4029b0,%esi					# Save address of "%d %d" to %rsi.
+  400fed:	e8 4e fc ff ff       	callq  400c40 <__isoc99_sscanf@plt>		# Call scanf. Params are %rdi, %rsi, %rdx. %rsi is "%d %d", %rsi is %rsp.
+  400ff2:	83 f8 01             	cmp    $0x1,%eax						# Compare returned value.
+  400ff5:	7f 05                	jg     400ffc <phase_3+0x30>			# If over two items, keep going.
+  400ff7:	e8 af 06 00 00       	callq  4016ab <explode_bomb>			# Or explode.
+  400ffc:	8b 04 24             	mov    (%rsp),%eax						# Save input[0] to %eax.
+ 
+  Below is switch-case satement.
+  Indices range from 0 to 7, 
+  so the input[0] must be in range from 43 to 50.
 
+  400fff:	83 e8 2b             	sub    $0x2b,%eax						# Subtract 0x2b(43) from $eax.
+  401002:	83 f8 07             	cmp    $0x7,%eax						# Compare unsigned %eax with 7.
+  401005:	77 64                	ja     40106b <phase_3+0x9f>			# If over 7, jump and explode.
+  401007:	89 c0                	mov    %eax,%eax						# NOP
+  401009:	ff 24 c5 e0 26 40 00 	jmpq   *0x4026e0(,%rax,8)				# Jump! This is a switch-case statement!
+
+  401010:	b8 88 00 00 00       	mov    $0x88,%eax						# >> 0
+  401015:	eb 05                	jmp    40101c <phase_3+0x50>
+  
+  401017:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 1
+  40101c:	2d 4c 02 00 00       	sub    $0x24c,%eax
+  
+  401021:	eb 05                	jmp    401028 <phase_3+0x5c>
+  401023:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 2
+  401028:	05 e9 02 00 00       	add    $0x2e9,%eax
+  40102d:	eb 05                	jmp    401034 <phase_3+0x68>
+
+  40102f:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 3
+  401034:	2d 00 02 00 00       	sub    $0x200,%eax
+  401039:	eb 05                	jmp    401040 <phase_3+0x74>
+  
+  40103b:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 4
+  401040:	05 00 02 00 00       	add    $0x200,%eax
+  401045:	eb 05                	jmp    40104c <phase_3+0x80>
+
+  401047:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 5
+  40104c:	2d 00 02 00 00       	sub    $0x200,%eax
+  401051:	eb 05                	jmp    401058 <phase_3+0x8c>
+  
+  401053:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 6
+  401058:	05 00 02 00 00       	add    $0x200,%eax
+  40105d:	eb 05                	jmp    401064 <phase_3+0x98>
+  
+  40105f:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 7
+  401064:	2d 00 02 00 00       	sub    $0x200,%eax
+  401069:	eb 0a                	jmp    401075 <phase_3+0xa9>
+  40106b:	e8 3b 06 00 00       	callq  4016ab <explode_bomb>
+  401070:	b8 00 00 00 00       	mov    $0x0,%eax						# Save 0 to %eax.
+  401075:	3b 44 24 04          	cmp    0x4(%rsp),%eax					# Compare %eax with input[1].
+  401079:	74 05                	je     401080 <phase_3+0xb4>			# If input[1] == 0, safe.
+  40107b:	e8 2b 06 00 00       	callq  4016ab <explode_bomb>			# Or die.
+  401080:	48 8b 44 24 08       	mov    0x8(%rsp),%rax					# Restore stack canary.
+  401085:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax					# Compare.
+~~~
+
+The jump table look like:
+
+~~~
+(gdb) x/8gx 0x4026e0
+0x4026e0:	0x0000000000401010	0x0000000000401017
+0x4026f0:	0x0000000000401023	0x000000000040102f
+0x402700:	0x000000000040103b	0x0000000000401047
+0x402710:	0x0000000000401053	0x000000000040105f
+~~~
+
+Possible answers:
+
+- 43 -219
+ Route from 0.
+
+- 44 -355
+ Route from 1.
+
+- 45 233
+ Route from 2.
+
+- 46 512
+ Route from 3.
+
+- 47 0
+ Route from 4.
+
+- 50 -512
+ Route from 7.
