@@ -276,3 +276,121 @@ Possible answers:
 
 - 50 -512
  Route from 7.
+
+### Phase 4
+
+ Let's see.
+
+~~~
+00000000004010d5 <phase_4>:
+  4010d5:	48 83 ec 18          	sub    $0x18,%rsp						# Allocate 24 bytes.
+  4010d9:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax					# Save stack canary to %rax.
+  4010e0:	00 00 
+  4010e2:	48 89 44 24 08       	mov    %rax,0x8(%rsp)					# Save %rax(value of stack canary) to (%rsp + 8).
+  4010e7:	31 c0                	xor    %eax,%eax						# Clear %rax.
+  4010e9:	48 89 e1             	mov    %rsp,%rcx						# Save stack pointer to %rcx. &input[1].
+  4010ec:	48 8d 54 24 04       	lea    0x4(%rsp),%rdx					# Save stack pointer + 4 to %rdx. &input[0].
+  4010f1:	be b0 29 40 00       	mov    $0x4029b0,%esi					# Save address of "%d %d" to %rsi.
+  4010f6:	e8 45 fb ff ff       	callq  400c40 <__isoc99_sscanf@plt>		# Call sscanf. Read two integers. Input numbers from %rsp + 4.
+  4010fb:	83 f8 02             	cmp    $0x2,%eax						# Compare %rax with 2.
+  4010fe:	75 0b                	jne    40110b <phase_4+0x36>			# If %rax != 2, jump and explode.
+  401100:	8b 04 24             	mov    (%rsp),%eax						# Save (%rsp) to %rax.
+  401103:	83 e8 03             	sub    $0x3,%eax						# %rax -= 3.
+  401106:	83 f8 02             	cmp    $0x2,%eax						# Compare %rax with 2.
+  401109:	76 05                	jbe    401110 <phase_4+0x3b>			# If %rax <= 2, keep going.
+  40110b:	e8 9b 05 00 00       	callq  4016ab <explode_bomb>			# Or explode.
+  401110:	8b 34 24             	mov    (%rsp),%esi						# Save (%rsp)(input[1]) to %rsi.
+  401113:	bf 08 00 00 00       	mov    $0x8,%edi						# Save 8 to %rdi.
+  401118:	e8 7d ff ff ff       	callq  40109a <func4>					# Call func4. Params: 8, *%rs0.
+  40111d:	3b 44 24 04          	cmp    0x4(%rsp),%eax					# Compare %rax and (%rsp + 4)(input[0])
+  401121:	74 05                	je     401128 <phase_4+0x53>			# If %rax == input[0], keep going.
+  401123:	e8 83 05 00 00       	callq  4016ab <explode_bomb>			# Or explode.
+  401128:	48 8b 44 24 08       	mov    0x8(%rsp),%rax					# Restore stack canary.
+  40112d:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax					# Check canary.
+  401134:	00 00 
+  401136:	74 05                	je     40113d <phase_4+0x68>			# If ok, finish function.
+  401138:	e8 53 fa ff ff       	callq  400b90 <__stack_chk_fail@plt>
+  40113d:	48 83 c4 18          	add    $0x18,%rsp
+  401141:	c3     
+~~~
+
+
+The func4 is like below:
+
+~~~
+
+000000000040109a <func4>:
+  40109a:	85 ff                	test   %edi,%edi				# Test %rdi.
+  40109c:	7e 2b                	jle    4010c9 <func4+0x2f>		# Go to 0x4010c9 if %rdi <= 0.
+  40109e:	89 f0                	mov    %esi,%eax				# Save %rsi to %rax.
+  4010a0:	83 ff 01             	cmp    $0x1,%edi				# Compare %rdi with 1.
+  4010a3:	74 2e                	je     4010d3 <func4+0x39>		# If %rdi == 1, finish function.
+  4010a5:	41 54                	push   %r12						# Save %r12 to stack.
+  4010a7:	55                   	push   %rbp						# Save %rbp to stack.
+  4010a8:	53                   	push   %rbx						# Save %rbx to stack.
+  4010a9:	89 f5                	mov    %esi,%ebp				# Save %rsi to %rbp.
+  4010ab:	89 fb                	mov    %edi,%ebx				# Save %rdi to %rbx.
+  4010ad:	8d 7f ff             	lea    -0x1(%rdi),%edi			# Save %rdi - 1 to %rdi.
+  4010b0:	e8 e5 ff ff ff       	callq  40109a <func4>			# Call itself!
+  4010b5:	44 8d 64 05 00       	lea    0x0(%rbp,%rax,1),%r12d
+  4010ba:	8d 7b fe             	lea    -0x2(%rbx),%edi
+  4010bd:	89 ee                	mov    %ebp,%esi
+  4010bf:	e8 d6 ff ff ff       	callq  40109a <func4>
+  4010c4:	44 01 e0             	add    %r12d,%eax
+  4010c7:	eb 06                	jmp    4010cf <func4+0x35>
+  4010c9:	b8 00 00 00 00       	mov    $0x0,%eax
+  4010ce:	c3                   	retq   
+  4010cf:	5b                   	pop    %rbx
+  4010d0:	5d                   	pop    %rbp
+  4010d1:	41 5c                	pop    %r12
+  4010d3:	f3 c3                	repz retq 
+
+~~~
+
+The function fun4 is recursive, making it harder to read.
+
+So weask gdb for help.
+
+~~~
+(gdb) call func4(0, 1)
+$1 = 0
+(gdb) call func4(1, 1)
+$2 = 1
+(gdb) call func4(2, 1)
+$3 = 2
+(gdb) call func4(3, 1)
+$4 = 4
+(gdb) call func4(4, 1)
+$5 = 7
+(gdb) call func4(5, 1)
+$6 = 12
+(gdb) call func4(6, 1)
+$7 = 20
+(gdb) call func4(7, 1)
+$8 = 33
+(gdb) call func4(8, 1)
+$9 = 54
+(gdb) call func4(9, 1)
+$10 = 88
+(gdb) call func4(10, 1)
+$11 = 143
+~~~
+
+Gocha!
+
+fun4(x, y) = (Fibonacci(x + 1) - 1) * y.
+
+In phase 4, the x is fixed to 8, so fun4(8, y) is 54 * y.
+
+
+Summary:
+
+- input[0] must be <= 5.
+- input[0] must be >= 3.
+- input[1] must be input[0] * 54.
+
+Possible answers:
+
+- 162 3
+- 216 4
+- 270 5
