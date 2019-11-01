@@ -746,7 +746,7 @@ The secret phase look like below:
   40133d:	c3                   	retq   
 ~~~
 
- Read a line and then make it an integet using strtol.
+ Read a line and then make it an integer using strtol.
 
 ~~~c
 long strtol(const char *restrict str, char **restrict endptr, int base);
