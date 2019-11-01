@@ -474,3 +474,181 @@ Possible answers:
 
 - Too many.
 - One of them is pabxxi.
+
+### Phase 6
+
+~~~
+0000000000401183 <phase_6>:
+  401183:	41 56                	push   %r14						# Save %r14 to stack.
+  401185:	41 55                	push   %r13						# Save %r13 to stack.
+  401187:	41 54                	push   %r12						# Save %r12 to stack.
+  401189:	55                   	push   %rbp						# Save %rbp to stack.
+  40118a:	53                   	push   %rbx						# Save %rbx to stack.
+  40118b:	48 83 ec 60          	sub    $0x60,%rsp				# Allocate 0x60(96) bytes
+  40118f:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax			# Save stack canary to %rax.
+  401196:	00 00 
+  401198:	48 89 44 24 58       	mov    %rax,0x58(%rsp)			# Save %rax to somewhere in stack.
+  40119d:	31 c0                	xor    %eax,%eax				# Clear %rax.
+  40119f:	48 89 e6             	mov    %rsp,%rsi				# Save %rsp to %rsi.
+  4011a2:	e8 3a 05 00 00       	callq  4016e1 <read_numbers>	# Call read_numbers. Get 7 integers and save them in stack.
+  4011a7:	49 89 e4             	mov    %rsp,%r12				# Save %rsp to %r12.
+  4011aa:	49 89 e5             	mov    %rsp,%r13				# Save %rsp to %r13.
+  4011ad:	41 be 00 00 00 00    	mov    $0x0,%r14d				# Clear %r14d
+  
+  4011b3:	4c 89 ed             	mov    %r13,%rbp				# Save %r13 to %rbp.
+  4011b6:	41 8b 45 00          	mov    0x0(%r13),%eax			# Save (%r13) to %rax. Possibly the first input value, and then goes next and next...
+  4011ba:	83 e8 01             	sub    $0x1,%eax				# Sub 1 from %rax.
+  4011bd:	83 f8 06             	cmp    $0x6,%eax				# Compare %rax with 6.
+  4011c0:	76 05                	jbe    4011c7 <phase_6+0x44>	# If 0 <= %rax <= 6, keep going.
+  4011c2:	e8 e4 04 00 00       	callq  4016ab <explode_bomb>	# Or explode.
+  4011c7:	41 83 c6 01          	add    $0x1,%r14d				# Add 1 to %r14d.
+  4011cb:	41 83 fe 07          	cmp    $0x7,%r14d				# Compare %r14d with 7.
+  4011cf:	74 21                	je     4011f2 <phase_6+0x6f>	# If %r14d == 7, go to 0x4011f2.
+  
+  4011d1:	44 89 f3             	mov    %r14d,%ebx				# Save %r14d to %ebx.
+
+
+  Iterate through given array input, and assert that input[0] appears only ones.
+
+  >>> Loop 1 begin
+  4011d4:	48 63 c3             	movslq %ebx,%rax				# Save %rbx to %rax.
+  4011d7:	8b 04 84             	mov    (%rsp,%rax,4),%eax		# Save (%rsp + 4 * %rax) to %rax.
+  4011da:	39 45 00             	cmp    %eax,0x0(%rbp)			# Compare (%rbp) with %rax.
+  4011dd:	75 05                	jne    4011e4 <phase_6+0x61>	# If (%rbp) != %rax, keep going.
+  4011df:	e8 c7 04 00 00       	callq  4016ab <explode_bomb>	# Or explode.
+  4011e4:	83 c3 01             	add    $0x1,%ebx				# Add 1 to %rbx.	
+  4011e7:	83 fb 06             	cmp    $0x6,%ebx				# Compare %rbx with 6.
+  4011ea:	7e e8                	jle    4011d4 <phase_6+0x51>	# If %rbx <= 6, go to 0x4011d4.
+  <<< Loop 1 end
+ 
+  4011ec:	49 83 c5 04          	add    $0x4,%r13				# Add 4 to %r13.
+  4011f0:	eb c1                	jmp    4011b3 <phase_6+0x30>	# Go to 0x4011b3.
+
+  4011f2:	48 8d 4c 24 1c       	lea    0x1c(%rsp),%rcx			# Save %rsp + 0x1c to %rcx.
+  4011f7:	ba 08 00 00 00       	mov    $0x8,%edx				# Save 8 to %edx.
+
+
+  input.map(num -> 8 - num)
+
+  >>> Loop 2 begin
+  4011fc:	89 d0                	mov    %edx,%eax				# Save %rdx to %rax.
+  4011fe:	41 2b 04 24          	sub    (%r12),%eax				# Subtract (%r12) from %rax.
+  401202:	41 89 04 24          	mov    %eax,(%r12)				# Save %rax to (%r12).
+  401206:	49 83 c4 04          	add    $0x4,%r12				# Add 4 to %r12.
+  40120a:	4c 39 e1             	cmp    %r12,%rcx				# Compare %rcx with %r12.
+  40120d:	75 ed                	jne    4011fc <phase_6+0x79>	# If %rcx != %r12, go to 0x4011fc.
+  <<< Loop 2 end  
+
+  40120f:	be 00 00 00 00       	mov    $0x0,%esi				# Clear %rsi.
+  401214:	eb 1a                	jmp    401230 <phase_6+0xad>	# Go to 0x401230.
+
+
+  while (rax++ != rcx) node = node->next ?
+
+  >>> Loop 3 begin
+  401216:	48 8b 52 08          	mov    0x8(%rdx),%rdx			# Save (%rdx + 8) to %rdx.
+  40121a:	83 c0 01             	add    $0x1,%eax				# Add 1 to %rax.
+  40121d:	39 c8                	cmp    %ecx,%eax				# Compare %rcx and %rax.
+  40121f:	75 f5                	jne    401216 <phase_6+0x93>	# If %rcx != %rax, go to begin of loop.
+  <<< Loop 3 end.
+
+
+  401221:	48 89 54 74 20       	mov    %rdx,0x20(%rsp,%rsi,2)	# Save %rdx to (32 + %rsp + 2 * %rsi).
+  401226:	48 83 c6 04          	add    $0x4,%rsi				# Add 4 to %rsi.
+  40122a:	48 83 fe 1c          	cmp    $0x1c,%rsi				# Compare %rsi with 0x1c(28).
+  40122e:	74 14                	je     401244 <phase_6+0xc1>	# if %rsi == 28, go to 0x401244
+
+  401230:	8b 0c 34             	mov    (%rsp,%rsi,1),%ecx		# Save (%rsp + %rsi) to %rcx.
+  401233:	b8 01 00 00 00       	mov    $0x1,%eax				# Save 1 to %rax.
+  401238:	ba f0 42 60 00       	mov    $0x6042f0,%edx			# Save address of node 1 to %rdx.
+  40123d:	83 f9 01             	cmp    $0x1,%ecx				# Compare %rcx and 1.
+  401240:	7f d4                	jg     401216 <phase_6+0x93>	# If %rcx > 1, go to loop 3.
+  401242:	eb dd                	jmp    401221 <phase_6+0x9e>	# Go to 0x401221.
+
+  All nodes copied to stack, starting from $rsp + 0x20, with 8 bytes width.
+
+  401244:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx			# Save first node address to %rbx.
+  401249:	48 8d 44 24 28       	lea    0x28(%rsp),%rax			# Save address of second node address to %rax.
+  40124e:	48 8d 74 24 58       	lea    0x58(%rsp),%rsi			# Save address of last node address + 8 to $rsi. 
+  401253:	48 89 d9             	mov    %rbx,%rcx				# Save %rbx to %rcx.
+
+  401256:	48 8b 10             	mov    (%rax),%rdx				# Save (%rax) to %rdx.
+  401259:	48 89 51 08          	mov    %rdx,0x8(%rcx)			# Make %rdx look for %rcx. 
+  40125d:	48 83 c0 08          	add    $0x8,%rax				# Go to next node.
+  401261:	48 89 d1             	mov    %rdx,%rcx				# Go to next node.
+  401264:	48 39 c6             	cmp    %rax,%rsi				# Until the end.
+  401267:	75 ed                	jne    401256 <phase_6+0xd3>	# Repeat.
+  
+  401269:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx)
+  401270:	00 
+  401271:	bd 06 00 00 00       	mov    $0x6,%ebp
+  
+  401276:	48 8b 43 08          	mov    0x8(%rbx),%rax			# Move to next node.
+  40127a:	8b 00                	mov    (%rax),%eax				# Get value of that node and save it to %rax..
+  40127c:	39 03                	cmp    %eax,(%rbx)				# Compare %eax and (%rbx).
+  40127e:	7d 05                	jge    401285 <phase_6+0x102>	# If (%rbx) >= %rax, keep going.
+  
+  Lines below assert value of each nodes get smaller.
+
+  401280:	e8 26 04 00 00       	callq  4016ab <explode_bomb>
+  401285:	48 8b 5b 08          	mov    0x8(%rbx),%rbx
+  401289:	83 ed 01             	sub    $0x1,%ebp
+  40128c:	75 e8                	jne    401276 <phase_6+0xf3>
+  
+  40128e:	48 8b 44 24 58       	mov    0x58(%rsp),%rax
+  401293:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax
+  40129a:	00 00 
+  40129c:	74 05                	je     4012a3 <phase_6+0x120>
+  40129e:	e8 ed f8 ff ff       	callq  400b90 <__stack_chk_fail@plt>
+  4012a3:	48 83 c4 60          	add    $0x60,%rsp
+  4012a7:	5b                   	pop    %rbx
+  4012a8:	5d                   	pop    %rbp
+  4012a9:	41 5c                	pop    %r12
+  4012ab:	41 5d                	pop    %r13
+  4012ad:	41 5e                	pop    %r14
+  4012af:	c3                   	retq   
+~~~
+
+ This function takes seven integers and save them to an array(we call `input`).
+
+Each elements of the array are transformed to 8 - item.
+
+Thery are used to order a linked list.
+
+Value of each node sholud go descent.
+
+Nodes are like below:
+
+~~~
+(gdb) x/28wx 0x6042f0
+0x6042f0 <node1>:	0x0000033e	0x00000001	0x00604300	0x00000000
+0x604300 <node2>:	0x00000147	0x00000002	0x00604310	0x00000000
+0x604310 <node3>:	0x000002df	0x00000003	0x00604320	0x00000000
+0x604320 <node4>:	0x00000059	0x00000004	0x00604330	0x00000000
+0x604330 <node5>:	0x000002f9	0x00000005	0x00604340	0x00000000
+0x604340 <node6>:	0x0000004e	0x00000006	0x00604350	0x00000000
+0x604350 <node7>:	0x000003ba	0x00000007	0x00000000	0x00000000
+~~~
+
+The nodes should be in this order:
+
+7 1 5 3 2 4 6
+
+So the input value would be:
+
+1 7 3 5 6 4 2
+
+Summary:
+
+- Every item in input must be >= 1 and <= 7.
+- input[0] must be unique in that array.
+- We need to sort list descending.
+
+Possible answers:
+
+- 1 7 3 5 6 4 2
+
+
+
+
+
