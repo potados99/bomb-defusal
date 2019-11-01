@@ -648,7 +648,144 @@ Possible answers:
 
 - 1 7 3 5 6 4 2
 
+### Secret phase
+ 
+ We can enter secret phase after defusing 6 phased.
 
+The entry point is in <bomb_defused>.
 
+~~~
+000000000040184b <phase_defused>:
+  40184b:	48 83 ec 78          	sub    $0x78,%rsp
+  40184f:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
+  401856:	00 00 
+  401858:	48 89 44 24 68       	mov    %rax,0x68(%rsp)
+  40185d:	31 c0                	xor    %eax,%eax
+  40185f:	bf 01 00 00 00       	mov    $0x1,%edi
+  401864:	e8 38 fd ff ff       	callq  4015a1 <send_msg>
+  401869:	83 3d 5c 2f 20 00 06 	cmpl   $0x6,0x202f5c(%rip)        # 6047cc <num_input_strings>
+  401870:	75 6d                	jne    4018df <phase_defused+0x94>
 
+  Reached only when phase 6 defused.
 
+  401872:	4c 8d 44 24 10       	lea    0x10(%rsp),%r8					# 
+  401877:	48 8d 4c 24 0c       	lea    0xc(%rsp),%rcx					# p3 is %rsp + 12.
+  40187c:	48 8d 54 24 08       	lea    0x8(%rsp),%rdx					# p2 is %rsp + 8.
+  401881:	be fa 29 40 00       	mov    $0x4029fa,%esi					# p1 is "%d %d %s".
+  401886:	bf d0 48 60 00       	mov    $0x6048d0,%edi					# p0 is infile.
+  40188b:	b8 00 00 00 00       	mov    $0x0,%eax
+  401890:	e8 ab f3 ff ff       	callq  400c40 <__isoc99_sscanf@plt>
+  401895:	83 f8 03             	cmp    $0x3,%eax
+  401898:	75 31                	jne    4018cb <phase_defused+0x80>		# If input count not 3, just pass the secret phase.
+  40189a:	be 03 2a 40 00       	mov    $0x402a03,%esi					# "NoOneKnowsMeBomb"
+  40189f:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi					# String at %rsp + 16.
+  4018a4:	e8 2e fb ff ff       	callq  4013d7 <strings_not_equal>		# Test string.
+  4018a9:	85 c0                	test   %eax,%eax
+  4018ab:	75 1e                	jne    4018cb <phase_defused+0x80>		# If not matched "NoOneKnowsMeBomb", just pass the secret phase.
+  4018ad:	bf 58 28 40 00       	mov    $0x402858,%edi					# "Curses! ..blahblah"
+  4018b2:	e8 b9 f2 ff ff       	callq  400b70 <puts@plt>
+  4018b7:	bf 80 28 40 00       	mov    $0x402880,%edi
+  4018bc:	e8 af f2 ff ff       	callq  400b70 <puts@plt>
+  4018c1:	b8 00 00 00 00       	mov    $0x0,%eax
+  4018c6:	e8 23 fa ff ff       	callq  4012ee <secret_phase>			# Get into the secret phase!
+  4018cb:	bf b8 28 40 00       	mov    $0x4028b8,%edi					# "Congratulations!.. blahblah"
+  4018d0:	e8 9b f2 ff ff       	callq  400b70 <puts@plt>
+  4018d5:	bf e8 28 40 00       	mov    $0x4028e8,%edi					# "Your instructor ...blahblah"
+  4018da:	e8 91 f2 ff ff       	callq  400b70 <puts@plt>
+
+  4018df:	48 8b 44 24 68       	mov    0x68(%rsp),%rax
+  4018e4:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax
+  4018eb:	00 00 
+  4018ed:	74 05                	je     4018f4 <phase_defused+0xa9>
+  4018ef:	e8 9c f2 ff ff       	callq  400b90 <__stack_chk_fail@plt>
+  4018f4:	48 83 c4 78          	add    $0x78,%rsp
+  4018f8:	c3                   	retq   
+~~~
+
+ When current phase is at 6, the bomb re-read the answer of phase 4.
+
+The previus input string is stored at:
+
+ ~~~
+ (gdb) x/32bc 0x6048d0
+0x6048d0 <input_strings+240>:   50 '2'  55 '7'  48 '0'  32 ' '  53 '5'  32 ' '  78 'N'  111 'o'
+0x6048d8 <input_strings+248>:   79 'O'  110 'n' 101 'e' 75 'K'  110 'n' 111 'o' 119 'w' 115 's'
+0x6048e0 <input_strings+256>:   77 'M'  101 'e' 66 'B'  111 'o' 109 'm' 98 'b'  0 '\000'        0 '\000'
+0x6048e8 <input_strings+264>:   0 '\000'        0 '\000'        0 '\000'        0 '\000'        0 '\000'        0 '\000'        0 '\000'        0 '\000'
+ ~~~
+
+At this point the answer is read with "%d %d %s" format, not "%d %d".
+
+We will append the magic string "NoOneKnowsMeBomb" to the answer of phase 4.
+
+The secret phase look like below:
+
+~~~
+00000000004012ee <secret_phase>:
+  4012ee:	53                   	push   %rbx
+  4012ef:	e8 31 04 00 00       	callq  401725 <read_line>
+  4012f4:	ba 0a 00 00 00       	mov    $0xa,%edx					# base.
+  4012f9:	be 00 00 00 00       	mov    $0x0,%esi					# endptr.
+  4012fe:	48 89 c7             	mov    %rax,%rdi					# str.
+  401301:	e8 1a f9 ff ff       	callq  400c20 <strtol@plt>
+  401306:	48 89 c3             	mov    %rax,%rbx					# The result.
+  401309:	8d 40 ff             	lea    -0x1(%rax),%eax				# Subtract 1 from %rax.
+  40130c:	3d e8 03 00 00       	cmp    $0x3e8,%eax					# Compare %rax with 0x3e8.
+  401311:	76 05                	jbe    401318 <secret_phase+0x2a>	# If 0 <= %rax <= 0x3e8, keep going.
+  401313:	e8 93 03 00 00       	callq  4016ab <explode_bomb>		# Or explode.
+  401318:	89 de                	mov    %ebx,%esi					# The number as p1.
+  40131a:	bf 10 41 60 00       	mov    $0x604110,%edi				# Address of 0x0000000000000024 as p0.
+  40131f:	e8 8c ff ff ff       	callq  4012b0 <fun7>				# Call fun7.
+  401324:	85 c0                	test   %eax,%eax					# Test the result.
+  401326:	74 05                	je     40132d <secret_phase+0x3f>	# If the returned value is zero, keep going.
+  401328:	e8 7e 03 00 00       	callq  4016ab <explode_bomb>		# Or explode.
+  40132d:	bf a8 26 40 00       	mov    $0x4026a8,%edi				# "Wow! ...blahblah"
+  401332:	e8 39 f8 ff ff       	callq  400b70 <puts@plt>
+  401337:	e8 0f 05 00 00       	callq  40184b <phase_defused>
+  40133c:	5b                   	pop    %rbx
+  40133d:	c3                   	retq   
+~~~
+
+ Read a line and then make it an integet using strtol.
+
+~~~c
+long strtol(const char *restrict str, char **restrict endptr, int base);
+~~~
+
+The input number should be less than or equal to 0x3e8.
+
+Furthermore, because it is an unsigned comparison, the number should be over or equal to zero.
+
+Then the bomb calls fun7 with address of 0x24 and the input number.
+
+The returned value must be zero.
+
+How do we produce zero returned value?
+
+~~~
+(gdb) call fun7(0x604110, 1)
+$1 = 0
+(gdb) call fun7(0x604110, 2)
+$2 = -8
+(gdb) call fun7(0x604110, 3)
+$3 = -8
+(gdb) call fun7(0x604110, 0)
+$4 = -16
+~~~
+
+Just called and got it.
+
+The answer is 1.
+
+Summary:
+
+- The input number must be >= 0 and <= 0x3e8
+- fun7(0x604110, num) must be 0.
+
+Possible answers:
+
+- 1
+- 6
+- 8
+- 36
+...
