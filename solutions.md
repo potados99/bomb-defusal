@@ -32,7 +32,7 @@ We can locate that string in rodata sector in the executable.
   400f4a:	53                   	push   %rbx
   400f4b:	48 83 ec 38          	sub    $0x38,%rsp
   400f4f:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
-  400f56:	00 00 
+  400f56:	00 00
   400f58:	48 89 44 24 28       	mov    %rax,0x28(%rsp)
   400f5d:	31 c0                	xor    %eax,%eax
   400f5f:	48 89 e6             	mov    %rsp,%rsi
@@ -62,7 +62,7 @@ We can locate that string in rodata sector in the executable.
   400fae:	eb d7                	jmp    400f87 <phase_2+0x3e>
   400fb0:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
   400fb5:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax
-  400fbc:	00 00 
+  400fbc:	00 00
   400fbe:	74 05                	je     400fc5 <phase_2+0x7c>
   400fc0:	e8 cb fb ff ff       	callq  400b90 <__stack_chk_fail@plt>
   400fc5:	48 83 c4 38          	add    $0x38,%rsp
@@ -75,7 +75,7 @@ It's a bit complicated. Lets have a look at that.
 We don't need lines like `push   %rbp`, `push   %rbx` and `retq`, thus will eleminate them.
 Also we will attach some comments.
 
-Stack smashing detecting is applied to this function. 
+Stack smashing detecting is applied to this function.
 Stack canary is saved at the beginning of the function, and checked at the end of the function.
 We only need to figure out what this function does. So remove them also.
 
@@ -114,7 +114,7 @@ We only need to figure out what this function does. So remove them also.
   400f8d:	74 05                	je     400f94 <phase_2+0x4b>	# if %edx == (%rbp), keep going.
   400f8f:	e8 17 07 00 00       	callq  4016ab <explode_bomb>	# >> Or die.
   400f94:	83 c3 01             	add    $0x1,%ebx				# Add 1 to %ebx. Now 2.
-  400f97:	48 83 c5 04          	add    $0x4,%rbp				# Add 4 to %rbp. Now points &vars[1]. 
+  400f97:	48 83 c5 04          	add    $0x4,%rbp				# Add 4 to %rbp. Now points &vars[1].
   400f9b:	83 fb 07             	cmp    $0x7,%ebx				# Compare 7 and %ebx.
   400f9e:	74 10                	je     400fb0 <phase_2+0x67>	# >> If 7 == %ebx, go to the end of the function.
   400fa0:	ba 01 00 00 00       	mov    $0x1,%edx				# Save 1 to %edx.
@@ -164,7 +164,7 @@ The %ebx gets from 2 up to 128(2^7).
 
 Total 7 compare, each input number should be 2^(index of number + 1).
 
-Summary: 
+Summary:
 
 - vars[0] must be over zero.
 - vars[0] must be 2.
@@ -186,7 +186,7 @@ answer is 2 4 8 16 32 64 128.
 0000000000400fcc <phase_3>:
   400fcc:	48 83 ec 18          	sub    $0x18,%rsp						# Allocate 0x18(24) bytes in stack.
   400fd0:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax					# Save stack canary to %rax.
-  400fd7:	00 00 
+  400fd7:	00 00
   400fd9:	48 89 44 24 08       	mov    %rax,0x8(%rsp)					# Save stack canary to stack with offset +8.
   400fde:	31 c0                	xor    %eax,%eax						# Clear %rax.
   400fe0:	48 8d 4c 24 04       	lea    0x4(%rsp),%rcx					# Save %rsp + 4 to %rcx.
@@ -197,9 +197,9 @@ answer is 2 4 8 16 32 64 128.
   400ff5:	7f 05                	jg     400ffc <phase_3+0x30>			# If over two items, keep going.
   400ff7:	e8 af 06 00 00       	callq  4016ab <explode_bomb>			# Or explode.
   400ffc:	8b 04 24             	mov    (%rsp),%eax						# Save input[0] to %eax.
- 
+
   Below is switch-case satement.
-  Indices range from 0 to 7, 
+  Indices range from 0 to 7,
   so the input[0] must be in range from 43 to 50.
 
   400fff:	83 e8 2b             	sub    $0x2b,%eax						# Subtract 0x2b(43) from $eax.
@@ -210,10 +210,10 @@ answer is 2 4 8 16 32 64 128.
 
   401010:	b8 88 00 00 00       	mov    $0x88,%eax						# >> 0
   401015:	eb 05                	jmp    40101c <phase_3+0x50>
-  
+
   401017:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 1
   40101c:	2d 4c 02 00 00       	sub    $0x24c,%eax
-  
+
   401021:	eb 05                	jmp    401028 <phase_3+0x5c>
   401023:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 2
   401028:	05 e9 02 00 00       	add    $0x2e9,%eax
@@ -222,7 +222,7 @@ answer is 2 4 8 16 32 64 128.
   40102f:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 3
   401034:	2d 00 02 00 00       	sub    $0x200,%eax
   401039:	eb 05                	jmp    401040 <phase_3+0x74>
-  
+
   40103b:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 4
   401040:	05 00 02 00 00       	add    $0x200,%eax
   401045:	eb 05                	jmp    40104c <phase_3+0x80>
@@ -230,11 +230,11 @@ answer is 2 4 8 16 32 64 128.
   401047:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 5
   40104c:	2d 00 02 00 00       	sub    $0x200,%eax
   401051:	eb 05                	jmp    401058 <phase_3+0x8c>
-  
+
   401053:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 6
   401058:	05 00 02 00 00       	add    $0x200,%eax
   40105d:	eb 05                	jmp    401064 <phase_3+0x98>
-  
+
   40105f:	b8 00 00 00 00       	mov    $0x0,%eax						# >> 7
   401064:	2d 00 02 00 00       	sub    $0x200,%eax
   401069:	eb 0a                	jmp    401075 <phase_3+0xa9>
@@ -260,22 +260,13 @@ The jump table look like:
 Possible answers:
 
 - 43 -219
- Route from 0.
-
 - 44 -355
- Route from 1.
-
 - 45 233
- Route from 2.
-
-- 46 512
- Route from 3.
-
+- 46 -512
 - 47 0
- Route from 4.
-
+- 48 -512
+- 49 0
 - 50 -512
- Route from 7.
 
 ### Phase 4
 
@@ -285,7 +276,7 @@ Possible answers:
 00000000004010d5 <phase_4>:
   4010d5:	48 83 ec 18          	sub    $0x18,%rsp						# Allocate 24 bytes.
   4010d9:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax					# Save stack canary to %rax.
-  4010e0:	00 00 
+  4010e0:	00 00
   4010e2:	48 89 44 24 08       	mov    %rax,0x8(%rsp)					# Save %rax(value of stack canary) to (%rsp + 8).
   4010e7:	31 c0                	xor    %eax,%eax						# Clear %rax.
   4010e9:	48 89 e1             	mov    %rsp,%rcx						# Save stack pointer to %rcx. &input[1].
@@ -307,7 +298,7 @@ Possible answers:
   401123:	e8 83 05 00 00       	callq  4016ab <explode_bomb>			# Or explode.
   401128:	48 8b 44 24 08       	mov    0x8(%rsp),%rax					# Restore stack canary.
   40112d:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax					# Check canary.
-  401134:	00 00 
+  401134:	00 00
   401136:	74 05                	je     40113d <phase_4+0x68>			# If ok, finish function.
   401138:	e8 53 fa ff ff       	callq  400b90 <__stack_chk_fail@plt>
   40113d:	48 83 c4 18          	add    $0x18,%rsp
@@ -343,7 +334,7 @@ The func4 is like below:
   4010cf:	5b                   	pop    %rbx
   4010d0:	5d                   	pop    %rbp
   4010d1:	41 5c                	pop    %r12
-  4010d3:	f3 c3                	repz retq 
+  4010d3:	f3 c3                	repz retq
 
 ~~~
 
@@ -486,7 +477,7 @@ Possible answers:
   40118a:	53                   	push   %rbx						# Save %rbx to stack.
   40118b:	48 83 ec 60          	sub    $0x60,%rsp				# Allocate 0x60(96) bytes
   40118f:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax			# Save stack canary to %rax.
-  401196:	00 00 
+  401196:	00 00
   401198:	48 89 44 24 58       	mov    %rax,0x58(%rsp)			# Save %rax to somewhere in stack.
   40119d:	31 c0                	xor    %eax,%eax				# Clear %rax.
   40119f:	48 89 e6             	mov    %rsp,%rsi				# Save %rsp to %rsi.
@@ -494,7 +485,7 @@ Possible answers:
   4011a7:	49 89 e4             	mov    %rsp,%r12				# Save %rsp to %r12.
   4011aa:	49 89 e5             	mov    %rsp,%r13				# Save %rsp to %r13.
   4011ad:	41 be 00 00 00 00    	mov    $0x0,%r14d				# Clear %r14d
-  
+
   4011b3:	4c 89 ed             	mov    %r13,%rbp				# Save %r13 to %rbp.
   4011b6:	41 8b 45 00          	mov    0x0(%r13),%eax			# Save (%r13) to %rax. Possibly the first input value, and then goes next and next...
   4011ba:	83 e8 01             	sub    $0x1,%eax				# Sub 1 from %rax.
@@ -504,7 +495,7 @@ Possible answers:
   4011c7:	41 83 c6 01          	add    $0x1,%r14d				# Add 1 to %r14d.
   4011cb:	41 83 fe 07          	cmp    $0x7,%r14d				# Compare %r14d with 7.
   4011cf:	74 21                	je     4011f2 <phase_6+0x6f>	# If %r14d == 7, go to 0x4011f2.
-  
+
   4011d1:	44 89 f3             	mov    %r14d,%ebx				# Save %r14d to %ebx.
 
 
@@ -516,11 +507,11 @@ Possible answers:
   4011da:	39 45 00             	cmp    %eax,0x0(%rbp)			# Compare (%rbp) with %rax.
   4011dd:	75 05                	jne    4011e4 <phase_6+0x61>	# If (%rbp) != %rax, keep going.
   4011df:	e8 c7 04 00 00       	callq  4016ab <explode_bomb>	# Or explode.
-  4011e4:	83 c3 01             	add    $0x1,%ebx				# Add 1 to %rbx.	
+  4011e4:	83 c3 01             	add    $0x1,%ebx				# Add 1 to %rbx.
   4011e7:	83 fb 06             	cmp    $0x6,%ebx				# Compare %rbx with 6.
   4011ea:	7e e8                	jle    4011d4 <phase_6+0x51>	# If %rbx <= 6, go to 0x4011d4.
   <<< Loop 1 end
- 
+
   4011ec:	49 83 c5 04          	add    $0x4,%r13				# Add 4 to %r13.
   4011f0:	eb c1                	jmp    4011b3 <phase_6+0x30>	# Go to 0x4011b3.
 
@@ -569,35 +560,35 @@ Possible answers:
 
   401244:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx			# Save first node address to %rbx.
   401249:	48 8d 44 24 28       	lea    0x28(%rsp),%rax			# Save address of second node address to %rax.
-  40124e:	48 8d 74 24 58       	lea    0x58(%rsp),%rsi			# Save address of last node address + 8 to $rsi. 
+  40124e:	48 8d 74 24 58       	lea    0x58(%rsp),%rsi			# Save address of last node address + 8 to $rsi.
   401253:	48 89 d9             	mov    %rbx,%rcx				# Save %rbx to %rcx.
 
   401256:	48 8b 10             	mov    (%rax),%rdx				# Save (%rax) to %rdx.
-  401259:	48 89 51 08          	mov    %rdx,0x8(%rcx)			# Make %rdx look for %rcx. 
+  401259:	48 89 51 08          	mov    %rdx,0x8(%rcx)			# Make %rdx look for %rcx.
   40125d:	48 83 c0 08          	add    $0x8,%rax				# Go to next node.
   401261:	48 89 d1             	mov    %rdx,%rcx				# Go to next node.
   401264:	48 39 c6             	cmp    %rax,%rsi				# Until the end.
   401267:	75 ed                	jne    401256 <phase_6+0xd3>	# Repeat.
-  
+
   401269:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx)
-  401270:	00 
+  401270:	00
   401271:	bd 06 00 00 00       	mov    $0x6,%ebp
-  
+
   401276:	48 8b 43 08          	mov    0x8(%rbx),%rax			# Move to next node.
   40127a:	8b 00                	mov    (%rax),%eax				# Get value of that node and save it to %rax..
   40127c:	39 03                	cmp    %eax,(%rbx)				# Compare %eax and (%rbx).
   40127e:	7d 05                	jge    401285 <phase_6+0x102>	# If (%rbx) >= %rax, keep going.
-  
+
   Lines below assert value of each nodes get smaller.
 
   401280:	e8 26 04 00 00       	callq  4016ab <explode_bomb>
   401285:	48 8b 5b 08          	mov    0x8(%rbx),%rbx
   401289:	83 ed 01             	sub    $0x1,%ebp
   40128c:	75 e8                	jne    401276 <phase_6+0xf3>
-  
+
   40128e:	48 8b 44 24 58       	mov    0x58(%rsp),%rax
   401293:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax
-  40129a:	00 00 
+  40129a:	00 00
   40129c:	74 05                	je     4012a3 <phase_6+0x120>
   40129e:	e8 ed f8 ff ff       	callq  400b90 <__stack_chk_fail@plt>
   4012a3:	48 83 c4 60          	add    $0x60,%rsp
@@ -649,7 +640,7 @@ Possible answers:
 - 1 7 3 5 6 4 2
 
 ### Secret phase
- 
+
  We can enter secret phase after defusing 6 phased.
 
 The entry point is in <bomb_defused>.
@@ -658,7 +649,7 @@ The entry point is in <bomb_defused>.
 000000000040184b <phase_defused>:
   40184b:	48 83 ec 78          	sub    $0x78,%rsp
   40184f:	64 48 8b 04 25 28 00 	mov    %fs:0x28,%rax
-  401856:	00 00 
+  401856:	00 00
   401858:	48 89 44 24 68       	mov    %rax,0x68(%rsp)
   40185d:	31 c0                	xor    %eax,%eax
   40185f:	bf 01 00 00 00       	mov    $0x1,%edi
@@ -668,7 +659,7 @@ The entry point is in <bomb_defused>.
 
   Reached only when phase 6 defused.
 
-  401872:	4c 8d 44 24 10       	lea    0x10(%rsp),%r8					# 
+  401872:	4c 8d 44 24 10       	lea    0x10(%rsp),%r8					#
   401877:	48 8d 4c 24 0c       	lea    0xc(%rsp),%rcx					# p3 is %rsp + 12.
   40187c:	48 8d 54 24 08       	lea    0x8(%rsp),%rdx					# p2 is %rsp + 8.
   401881:	be fa 29 40 00       	mov    $0x4029fa,%esi					# p1 is "%d %d %s".
@@ -695,7 +686,7 @@ The entry point is in <bomb_defused>.
 
   4018df:	48 8b 44 24 68       	mov    0x68(%rsp),%rax
   4018e4:	64 48 33 04 25 28 00 	xor    %fs:0x28,%rax
-  4018eb:	00 00 
+  4018eb:	00 00
   4018ed:	74 05                	je     4018f4 <phase_defused+0xa9>
   4018ef:	e8 9c f2 ff ff       	callq  400b90 <__stack_chk_fail@plt>
   4018f4:	48 83 c4 78          	add    $0x78,%rsp
