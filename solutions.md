@@ -292,7 +292,7 @@ Possible answers:
   40110b:	e8 9b 05 00 00       	callq  4016ab <explode_bomb>			# Or explode.
   401110:	8b 34 24             	mov    (%rsp),%esi						# Save (%rsp)(input[1]) to %rsi.
   401113:	bf 08 00 00 00       	mov    $0x8,%edi						# Save 8 to %rdi.
-  401118:	e8 7d ff ff ff       	callq  40109a <func4>					# Call func4. Params: 8, *%rs0.
+  401118:	e8 7d ff ff ff       	callq  40109a <func4>					# Call func4. Params: 8, *%rsp.
   40111d:	3b 44 24 04          	cmp    0x4(%rsp),%eax					# Compare %rax and (%rsp + 4)(input[0])
   401121:	74 05                	je     401128 <phase_4+0x53>			# If %rax == input[0], keep going.
   401123:	e8 83 05 00 00       	callq  4016ab <explode_bomb>			# Or explode.
@@ -456,10 +456,12 @@ The table at 0x402720 is like below:
 
 0 / 1 / 2 / 8 / 8 / 9
 
+
+
 Summary:
 
 - Length of input string must be 6.
-- input_string.map(char -> n_to_word_table(char & 0f)).sum() must be 0x21(33).
+- input_string.map(char -> n_to_word_table(char & 0x0f)).sum() must be 0x21(33).
 
 Possible answers:
 
