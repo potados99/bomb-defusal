@@ -1,4 +1,4 @@
-# Bomb-Defusal
+# bomb-lab
 
 This is bomb 94.
 
